@@ -6,7 +6,22 @@ char *
 string_duplicate (char * orig) 
 {
 	// TODO: implement here
-	return 0x0 ;
+	if (0x0 == orig) {
+		return 0x0;
+	}
+
+	int length = strlen(orig);
+	char *str = (char *) malloc(sizeof(char) * length + 1);
+
+	int i = 0;
+	while (orig[i] != 0x0) {
+		str[i] = orig[i];
+
+		i++;
+	}
+
+	str[i] = '\0';
+	return str;
 }
 
 int 
@@ -27,5 +42,11 @@ main()
 	while (*p != 0x0) {
 		printf("%s\n", *p) ;
 		p += 1 ;
+	}
+
+	p = days;
+	while (*p != 0x0) {
+		free(*p);
+		p += 1;
 	}
 }

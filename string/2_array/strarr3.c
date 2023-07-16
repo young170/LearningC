@@ -3,7 +3,7 @@
 #include <string.h>
 
 char * 
-string_duplicate(char * orig) 
+string_duplicate (char * orig) 
 {
 	char * t = 0x0 ;
 	int i ;

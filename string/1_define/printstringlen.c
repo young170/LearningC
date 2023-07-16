@@ -3,7 +3,14 @@
 int
 string_length(char *s) {
 	//TODO: Implement here
-	return 0 ;
+	int length = 0;
+
+	while (*s != 0x0) {
+		length++;
+		s += 1;
+	}
+
+	return length ;
 }
 
 
