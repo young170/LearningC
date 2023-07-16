@@ -5,7 +5,7 @@ print_string (char * s)
 {
 	while (*s != 0x0) {
 		putchar(*s) ;
-		s += 1 ;
+		s += 1 ; // pointer arithmetic
 	}
 }
 
