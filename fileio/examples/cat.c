@@ -9,6 +9,26 @@ int
 string_eq (char * s1, char * s2)
 {
 	//TODO: impelement here
+    while ((*s1) != 0x0 && (*s2) != 0x0) {
+        if ((*s1) != (*s2)) {
+            return 0;
+        }
+    
+        s1 += 1;
+        s2 += 1;
+    }
+
+    /*
+    Could add another check to see if either one is not null
+    Meaning the string lengths are different
+    But the code doesn't look clean..
+        if (!((*s1) != 0x0 && (*s2) != 0x0)) // the negation of when both are null
+    Thought of adding a comparison of the lengths at the start
+    Is this okay? efficiency-wise
+    */
+    
+
+    return 1;
 }
 
 void
