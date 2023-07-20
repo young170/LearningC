@@ -69,11 +69,13 @@ load_game (char * filename)
 	// Use fopen, getline, strtok, atoi, strcmp
 	// Note that the last character of a line obtained by getline may be '\n'.
     FILE *fp = fopen(filename, "r");
-    char buf[1024];
-    char n_buf[1024];
+    char *buf = (char *) malloc(1024);
+    size_t n_buf = 1024;
 
-    fscanf(fp, "%s", &n_cars); // first line, number of cars
+    fscanf(fp, "%d", &n_cars); // first line, number of cars
     cars = (car_t *) malloc(sizeof(car_t) * (n_cars + 1)); // cars in list + red car
+
+    getline(&buf, &n_buf, fp); // skip first line 
 
     int len;
     for (int i = 0; i < n_cars; i++) {
@@ -109,17 +111,30 @@ load_game (char * filename)
 
         if (vertical == dir_car) { // y2 row
             cars[i].x2 = cars[i].x1;
-            cars[i].y2 = cars[i].y1 + cars[i].span;
+            cars[i].y2 = cars[i].y1 + (cars[i].span - 1); // span includes x1/y1
+
+            if (BOARD_SIZE - 1 < cars[i].y2) {
+                fprintf(stderr, "file data incorrect\n");
+                return 1;
+            }
         } else if (horizontal == dir_car) { // x2 col
-            cars[i].x2 = cars[i].x1 + cars[i].span;
+            cars[i].x2 = cars[i].x1 + (cars[i].span - 1);
             cars[i].y2 = cars[i].y1;
+
+            if (BOARD_SIZE - 1 < cars[i].x2) {
+                fprintf(stderr, "file data incorrect\n");
+                return 1;
+            }
         } else {
             fprintf(stderr, "file data incorrect\n");
             return 1;
         }
 
-        return 0;
+        printf("\ndata:");
+        printf("%d, %d %d, %d %d, %d, %d\n", cars[i].id, cars[i].x1, cars[i].y1, cars[i].x2, cars[i].y2, cars[i].dir, cars[i].span);
     }
+
+    return 0;
 }
 
 void
@@ -159,8 +174,26 @@ update_cells ()
 	// return 0 for sucess
 	// return 1 if the given car information (cars) has a problem
     for (int i = 0; i < n_cars; i++) {
+        int x = cars[i].x1;
+        int y = cars[i].y1;
 
+        for (int j = 0; j < cars[i].span; j++) {
+            if ((cars[i].x1 + cars[i].span < x) || (cars[i].y1 + cars[i].span < y)) {
+                fprintf(stderr, "coordinates greater than span\n");
+                return 1;
+            }
+
+            cells[y][x] = i + 1;
+
+            if (vertical == cars[i].dir) {
+                y++;
+            } else {
+                x++;
+            }
+        }
     }
+
+    return 0;
 }
 
 int
