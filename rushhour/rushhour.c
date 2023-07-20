@@ -44,13 +44,21 @@ int cells[6][6] ; // cells[Y][X]
 // F1 -> cells[0][5]
 
 /* --- NOFIX */
-
+#define BOARD_SIZE 6
 
 commands
 get_op_code (char * s)
 {
 	// return the corresponding number for the command given as s.
 	// FIXME
+    for (int i = 0; i < N_op; i++) {
+        if (0 == strcmp(s, op_str[i])) {
+            return i;
+        }
+    }
+
+    printf("invalid command\n");
+    return -1;
 }
 
 int
@@ -60,6 +68,58 @@ load_game (char * filename)
 	// load_game returns 0 for a success, or return 1 for a failure.
 	// Use fopen, getline, strtok, atoi, strcmp
 	// Note that the last character of a line obtained by getline may be '\n'.
+    FILE *fp = fopen(filename, "r");
+    char buf[1024];
+    char n_buf[1024];
+
+    fscanf(fp, "%s", &n_cars); // first line, number of cars
+    cars = (car_t *) malloc(sizeof(car_t) * (n_cars + 1)); // cars in list + red car
+
+    int len;
+    for (int i = 0; i < n_cars; i++) {
+        char *sep = ":";
+        char *token;
+
+        len = getline(&buf, &n_buf, fp);
+        cars[i].id = i + 1; // id, 1-n_cars
+
+        token = strtok(buf, sep);
+        cars[i].x1 = token[0] - 'A'; // x1 col
+        cars[i].y1 = token[1] - '1'; // y1 row
+
+        token = strtok(0x0, sep);
+        direction dir_car;
+        if (0 == strcmp(token, "vertical")) {
+            dir_car = vertical;
+        } else if (0 == strcmp(token, "horizontal")) {
+            dir_car = horizontal;
+        } else {
+            fprintf(stderr, "file data incorrect\n");
+            return 1;
+        }
+        cars[i].dir = dir_car; // dir
+
+        token = strtok(0x0, sep);
+        int tmp = atoi(token); // span
+        if (0 == tmp) {
+            fprintf(stderr, "file data incorrect\n");
+            return 1;
+        }
+        cars[i].span = tmp;
+
+        if (vertical == dir_car) { // y2 row
+            cars[i].x2 = cars[i].x1;
+            cars[i].y2 = cars[i].y1 + cars[i].span;
+        } else if (horizontal == dir_car) { // x2 col
+            cars[i].x2 = cars[i].x1 + cars[i].span;
+            cars[i].y2 = cars[i].y1;
+        } else {
+            fprintf(stderr, "file data incorrect\n");
+            return 1;
+        }
+
+        return 0;
+    }
 }
 
 void
@@ -75,6 +135,19 @@ display ()
 	*/
 
 	//FIXME
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            if (0 == cells[i][j]) {
+                printf("+");
+            } else {
+                printf("%d", cells[i][j]);
+            }
+
+            printf(" ");
+        }
+
+        printf("\n");
+    }
 }
 
 int 
@@ -85,6 +158,9 @@ update_cells ()
 	//FIXME
 	// return 0 for sucess
 	// return 1 if the given car information (cars) has a problem
+    for (int i = 0; i < n_cars; i++) {
+
+    }
 }
 
 int
@@ -131,6 +207,8 @@ main ()
 				update_cells() ;
 				display() ;
 			//FIXME
+            default:
+                return EXIT_FAILURE;
 		}
 	}
 }
