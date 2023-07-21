@@ -73,13 +73,13 @@ load_game (char * filename)
     size_t n_buf = 1024;
 
     fscanf(fp, "%d", &n_cars); // first line, number of cars
-    cars = (car_t *) malloc(sizeof(car_t) * (n_cars + 1)); // cars in list + red car
+    cars = (car_t *) malloc(sizeof(car_t) * (n_cars)); // cars in list
 
     getline(&buf, &n_buf, fp); // skip first line 
 
     int len;
     for (int i = 0; i < n_cars; i++) {
-        char *sep = ":";
+        char *sep = ":\n";
         char *token;
 
         len = getline(&buf, &n_buf, fp);
@@ -87,7 +87,7 @@ load_game (char * filename)
 
         token = strtok(buf, sep);
         cars[i].x1 = token[0] - 'A'; // x1 col
-        cars[i].y1 = token[1] - '1'; // y1 row
+        cars[i].y1 = BOARD_SIZE - (token[1] - '0'); // y1 row
 
         token = strtok(0x0, sep);
         direction dir_car;
@@ -129,9 +129,6 @@ load_game (char * filename)
             fprintf(stderr, "file data incorrect\n");
             return 1;
         }
-
-        printf("\ndata:");
-        printf("%d, %d %d, %d %d, %d, %d\n", cars[i].id, cars[i].x1, cars[i].y1, cars[i].x2, cars[i].y2, cars[i].dir, cars[i].span);
     }
 
     return 0;
@@ -155,7 +152,7 @@ display ()
             if (0 == cells[i][j]) {
                 printf("+");
             } else {
-                printf("%d", cells[i][j]);
+                printf("%2d", cells[i][j]);
             }
 
             printf(" ");
@@ -178,12 +175,11 @@ update_cells ()
         int y = cars[i].y1;
 
         for (int j = 0; j < cars[i].span; j++) {
-            if ((cars[i].x1 + cars[i].span < x) || (cars[i].y1 + cars[i].span < y)) {
-                fprintf(stderr, "coordinates greater than span\n");
+            if (0 != cells[y][x]) {
                 return 1;
             }
 
-            cells[y][x] = i + 1;
+            cells[y][x] = cars[i].id;
 
             if (vertical == cars[i].dir) {
                 y++;
@@ -212,6 +208,66 @@ move (int id, int op)
 	//  (3) no car is placed at cells[cars[id].y1][cars[id].x1-1].
 	// You can find the condition for moving right, up, down as
 	//   a similar fashion.
+    if (id < 1 || n_cars < id) {
+        fprintf(stderr, "move invalid\n");
+        return 1;
+    }
+
+    if (vertical == cars[id].dir) {
+        if (left == op || right == op) {
+            fprintf(stderr, "move invalid\n");
+            return 1;
+        }
+    } else {
+        if (up == op || down == op) {
+            fprintf(stderr, "move invalid\n");
+            return 1;
+        }
+    }
+
+    if (vertical == cars[id].dir) {
+        if (down == op) {
+            if ((cars[id].y2 == 0) ||
+                (cells[cars[id].y1 - 1][cars[id].x1] != 0)) {
+                fprintf(stderr, "move invalid\n");
+                return 2;
+            }
+
+            cars[id].y1++;
+            cars[id].y2++;
+        } else {
+            if ((cars[id].y1 == BOARD_SIZE - 1) ||
+                (cells[cars[id].y2 + 1][cars[id].x1] != 0)) {
+                fprintf(stderr, "move invalid\n");
+                return 2;
+            }
+
+            cars[id].y1--;
+            cars[id].y2--;
+        }
+    } else {
+        if (right == op) {
+            if ((cars[id].x2 == BOARD_SIZE - 1) ||
+                (cells[cars[id].y1][cars[id].x2 + 1] != 0)) {
+                fprintf(stderr, "move invalid\n");
+                return 2;
+            }
+
+            cars[id].x1++;
+            cars[id].x2++;
+        } else {
+            if ((cars[id].x1 == 0) ||
+                (cells[cars[id].y1][cars[id].x1 - 1] != 0)) {
+                fprintf(stderr, "move invalid\n");
+                return 2;
+            }
+
+            cars[id].x1--;
+            cars[id].x2--;
+        }
+    }
+
+    return 0;
 }
 
 int
@@ -222,26 +278,47 @@ main ()
 	int id ;
 
 	while (1) {
-		scanf("%s", buf) ;
+		scanf("%127s", buf) ;
 
 		switch (op = get_op_code(buf)) {
 			case start:
 				scanf("%s", buf) ;
+
 				load_game(buf) ;
 				update_cells() ;
 				display() ;
+                break;
 
-			case left:
-			case right:
-			case up:
+			case left:  // fallthrough
+			case right: // fallthrough
+			case up:    // fallthrough
 			case down:
 				scanf("%d", &id) ;
+
+                if (0x0 == cars) {
+                    fprintf(stderr, "init game\n");
+                    break;
+                }
+
 				move(id, op) ;
 				update_cells() ;
 				display() ;
+
+                if (1 == cells[BOARD_SIZE / 2][BOARD_SIZE - 1]) {
+                    printf("Game Over.\n");
+                    return EXIT_SUCCESS;
+                }
+
+                break;
+
 			//FIXME
+            case quit:
+                // free allocated memory
+                return EXIT_SUCCESS;
             default:
-                return EXIT_FAILURE;
+                break;
 		}
 	}
+
+    return EXIT_SUCCESS;
 }
