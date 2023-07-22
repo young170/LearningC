@@ -152,7 +152,7 @@ display ()
             if (0 == cells[i][j]) {
                 printf("+");
             } else {
-                printf("%2d", cells[i][j]);
+                printf("%d", cells[i][j]);
             }
 
             printf(" ");
@@ -208,7 +208,9 @@ move (int id, int op)
 	//  (3) no car is placed at cells[cars[id].y1][cars[id].x1-1].
 	// You can find the condition for moving right, up, down as
 	//   a similar fashion.
-    if (id < 1 || n_cars < id) {
+    id--;
+
+    if (id < 0 || n_cars <= id) {
         fprintf(stderr, "move invalid\n");
         return 1;
     }
@@ -227,8 +229,8 @@ move (int id, int op)
 
     if (vertical == cars[id].dir) {
         if (down == op) {
-            if ((cars[id].y2 == 0) ||
-                (cells[cars[id].y1 - 1][cars[id].x1] != 0)) {
+            if ((cars[id].y2 == BOARD_SIZE - 1) ||
+                (cells[cars[id].y2 + 1][cars[id].x1] != 0)) {
                 fprintf(stderr, "move invalid\n");
                 return 2;
             }
@@ -237,7 +239,7 @@ move (int id, int op)
             cars[id].y2++;
         } else {
             if ((cars[id].y1 == BOARD_SIZE - 1) ||
-                (cells[cars[id].y2 + 1][cars[id].x1] != 0)) {
+                (cells[cars[id].y1 - 1][cars[id].x1] != 0)) {
                 fprintf(stderr, "move invalid\n");
                 return 2;
             }
@@ -268,6 +270,12 @@ move (int id, int op)
     }
 
     return 0;
+}
+
+void
+free_alloc()
+{
+    free(cars);
 }
 
 int
@@ -304,8 +312,9 @@ main ()
 				update_cells() ;
 				display() ;
 
-                if (1 == cells[BOARD_SIZE / 2][BOARD_SIZE - 1]) {
-                    printf("Game Over.\n");
+                if (1 == cells[(BOARD_SIZE / 2) - 1][BOARD_SIZE - 1]) {
+                    printf("Game Over\n");
+                    free_alloc();
                     return EXIT_SUCCESS;
                 }
 
@@ -314,11 +323,19 @@ main ()
 			//FIXME
             case quit:
                 // free allocated memory
+                if (cars != 0x0) {
+                    free_alloc();
+                }
+
                 return EXIT_SUCCESS;
             default:
                 break;
 		}
 	}
 
+    if (cars != 0x0) { // clean up
+        free_alloc();
+    }
+    
     return EXIT_SUCCESS;
 }
